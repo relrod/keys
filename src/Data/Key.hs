@@ -103,6 +103,8 @@ import Data.Tagged
 import Data.Traversable
 import Data.Tree
 import qualified Data.List as List
+import Data.Vector (Vector)
+import qualified Data.Vector as Vector
 import Data.Void
 import GHC.Generics
 import Prelude hiding (lookup, zip, zipWith)
@@ -1120,6 +1122,36 @@ instance FoldableWithKey Seq where
 
 instance TraversableWithKey Seq where
   traverseWithKey f = fmap Seq.fromList . traverseWithKey f . toList
+
+type instance Key Vector = Int
+
+instance Indexable Vector where
+  index = (Vector.!)
+
+instance Lookup Vector where
+  lookup = flip (Vector.!?)
+
+instance Zip Vector where
+  zip = Vector.zip
+  zipWith = Vector.zipWith
+
+instance ZipWithKey Vector where
+  zipWithKey f a b = Vector.zipWith id (Vector.imap f a) b
+
+instance Adjustable Vector where
+  -- There has to be a better way.
+  adjust f i v = Vector.update v updVec
+    where
+      updVec = Vector.singleton (i, f (v Vector.! i))
+
+instance Keyed Vector where
+  mapWithKey = Vector.imap
+
+instance FoldableWithKey Vector where
+  foldrWithKey = Vector.ifoldr
+
+instance TraversableWithKey Vector where
+  traverseWithKey f = fmap Vector.fromList . traverseWithKey f . toList
 
 type instance Key (Map k) = k
 
